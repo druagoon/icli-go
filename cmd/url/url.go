@@ -19,14 +19,31 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
-package main
+package url
 
 import (
 	"github.com/druagoon/icli-go/cmd"
-	_ "github.com/druagoon/icli-go/cmd/ip"
-	_ "github.com/druagoon/icli-go/cmd/url"
+	"github.com/spf13/cobra"
 )
 
-func main() {
-	cmd.Execute()
+// urlCmd represents the url command
+var urlCmd = &cobra.Command{
+	Use:   "url",
+	Short: "URL tools",
+	Run: func(cmd *cobra.Command, args []string) {
+	},
+}
+
+func init() {
+	cmd.RootCmd.AddCommand(urlCmd)
+
+	// Here you will define your flags and configuration settings.
+
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// urlCmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// urlCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

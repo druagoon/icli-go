@@ -1,4 +1,4 @@
-SHELL := /bin/bash
+SHELL := bash
 
 GOPATH ?= $(HOME)/.go
 GOBIN ?= $(GOPATH)/bin
@@ -18,3 +18,7 @@ install:
 .PHONY: clean
 clean:
 	rm -rf ./bin
+
+.PHONY: cmd-%
+cmd-%:
+	$(SHELL) ./tools/cmd "$*"

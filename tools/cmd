@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+BASE_DIR=$(
+    cd $(dirname "$0")
+    pwd
+)
+CMD_DIR="$(realpath "${BASE_DIR}/../cmd")"
+GO_MAIN="$(realpath "${BASE_DIR}/../main.go")"
+GO_MOD="github.com/druagoon/icli-go"
+GO_MOD_CMD="${GO_MOD}/cmd"
+ROOT_CMD="RootCmd"
+
+cmd::fmt() {
+    for f in "$@"; do
+        gopls imports -w "${f}"
+        gofmt -w "${f}"
+    done
+}
+
+cmd::group::amend() {
+    local group="$1"
+    local target="$2"
+    gsed -i -e "/^package /c\package ${group}" "${target}"
+    gsed -i -e "/^import /i\import \"${GO_MOD_CMD}\"" "${target}"
+    gsed -i -e "s/^\t\(${ROOT_CMD}\..\+\)/\tcmd.\1/g" "${target}"
+    # Import group command in main.go
+    local pkg="${GO_MOD_CMD}/${group}"
+    local pattern="${GO_MOD_CMD//\//\\/}"
+    gsed -i -e "/^import \"${pattern}\"$/a\import _ \"${pkg}\"" "${GO_MAIN}"
+    gsed -i -e "/^\t\"${pattern}\"$/a\_ \"${pkg}\"" "${GO_MAIN}"
+}
+
+cmd::group::init() {
+    local group="$1"
+    local group_dir="${CMD_DIR}/${group}"
+    local source="${CMD_DIR}/${group}.go"
+    local target="${group_dir}/${group}.go"
+    if [[ ! -f "${target}" ]]; then
+        cobra-cli add "${group}" -p "${ROOT_CMD}"
+        if [[ ! -d "${group_dir}" ]]; then
+            mkdir -p "${group_dir}"
+        fi
+        mv "${source}" "${target}"
+        cmd::group::amend "${group}" "${target}"
+        cmd::fmt "${target}" "${GO_MAIN}"
+    fi
+}
+
+cmd::amend() {
+    local group="$1"
+    local target="$2"
+    gsed -i -e "/^package /c\package ${group}" "${target}"
+}
+
+cmd::init() {
+    local group="$1"
+    local name="$2"
+    local group_dir="${CMD_DIR}/${group}"
+    local group_cmd="${group}Cmd"
+    local source="${CMD_DIR}/${name}.go"
+    local target="${group_dir}/${name}.go"
+    cobra-cli add "${name}" -p "${group_cmd}"
+    mv "${source}" "${target}"
+    cmd::amend "${group}" "${target}"
+    cmd::fmt "${target}"
+}
+
+main() {
+    local part=(${1//-/ })
+    local group="${part[0]}"
+    local name="${part[1]}"
+    cmd::group::init "${group}"
+    cmd::init "${group}" "${name}"
+}
+
+main "$@"
